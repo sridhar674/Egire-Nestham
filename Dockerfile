@@ -1,28 +1,15 @@
-# ---------- Build Stage ----------
-FROM cirrusci/flutter:latest AS builder
+# Use Node.js runtime
+FROM node:18-alpine
 
 # Set working directory
 WORKDIR /app
 
-# Copy pubspec files and get dependencies
-COPY pubspec.* ./
-RUN flutter pub get
+# Copy app.js
+COPY app.js ./
 
-# Copy the rest of the source code
-COPY . .
+# Expose the port your app uses (example: 3000)
+EXPOSE 3000
 
-# Build the web version of the Flutter app
-RUN flutter build web
-
-# ---------- Production Stage ----------
-FROM nginx:alpine
-
-# Copy build output from builder stage to Nginx html folder
-COPY --from=builder /app/build/web /usr/share/nginx/html
-
-# Expose port 80
-EXPOSE 80
-
-# Start Nginx
-CMD ["nginx", "-g", "daemon off;"]
+# Run the app
+CMD ["node", "app.js"]
 
