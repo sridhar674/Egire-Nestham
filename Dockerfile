@@ -1,21 +1,23 @@
-# ---------- Build Stage ----------
-FROM node:18 AS builder
+# Use Flutter stable image
+FROM cirrusci/flutter:latest
 
+# Set working directory
 WORKDIR /app
 
-COPY package*.json yarn.lock* ./
-RUN yarn install || npm install
+# Copy pubspec and fetch dependencies
+COPY pubspec.* ./
+RUN flutter pub get
 
+# Copy the rest of the code
 COPY . .
 
-RUN npx expo build:web
+# Build web app (for mobile builds you'd do flutter build apk / ios instead)
+RUN flutter build web
 
-# ---------- Production Stage ----------
+# Use a lightweight web server to serve the built files
 FROM nginx:alpine
-
-COPY --from=builder /app/web-build /usr/share/nginx/html
+COPY --from=0 /app/build/web /usr/share/nginx/html
 
 EXPOSE 80
-
 CMD ["nginx", "-g", "daemon off;"]
 
