@@ -16,10 +16,7 @@ pipeline {
         stage('Build Docker Image') {
             steps {
                 script {
-                    sh """
-                      echo "Building Docker image..."
-                      docker build -t ${IMAGE_NAME}:${IMAGE_TAG} .
-                    """
+                    sh 'docker build -t ${IMAGE_NAME}:${IMAGE_TAG} -f Dockerfile .'
                 }
             }
         }
@@ -27,30 +24,25 @@ pipeline {
         stage('Run Container') {
             steps {
                 script {
-                    // Stop & remove old container if it exists
-                    sh """
-                      docker stop ${IMAGE_NAME} || true
-                      docker rm ${IMAGE_NAME} || true
-                      echo "Running new container..."
-                      docker run -d --name ${IMAGE_NAME} -p 8080:80 ${IMAGE_NAME}:${IMAGE_TAG}
-                    """
+                    sh '''
+                    docker stop ${IMAGE_NAME} || true
+                    docker rm ${IMAGE_NAME} || true
+                    docker run -d --name ${IMAGE_NAME} -p 8080:80 ${IMAGE_NAME}:${IMAGE_TAG}
+                    '''
                 }
             }
         }
 
         stage('Verify Container') {
             steps {
-                sh "docker ps -a | grep ${IMAGE_NAME}"
+                sh 'docker ps -a | grep ${IMAGE_NAME}'
             }
         }
     }
 
     post {
         always {
-            script {
-                echo "Cleaning workspace"
-                cleanWs()
-            }
+            cleanWs()
         }
     }
 }
