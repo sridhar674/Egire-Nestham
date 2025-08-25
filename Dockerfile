@@ -1,23 +1,28 @@
-# Use Flutter stable image
-FROM cirrusci/flutter:latest
+# ---------- Build Stage ----------
+FROM cirrusci/flutter:latest AS builder
 
 # Set working directory
 WORKDIR /app
 
-# Copy pubspec and fetch dependencies
+# Copy pubspec files and get dependencies
 COPY pubspec.* ./
 RUN flutter pub get
 
-# Copy the rest of the code
+# Copy the rest of the source code
 COPY . .
 
-# Build web app (for mobile builds you'd do flutter build apk / ios instead)
+# Build the web version of the Flutter app
 RUN flutter build web
 
-# Use a lightweight web server to serve the built files
+# ---------- Production Stage ----------
 FROM nginx:alpine
-COPY --from=0 /app/build/web /usr/share/nginx/html
 
+# Copy build output from builder stage to Nginx html folder
+COPY --from=builder /app/build/web /usr/share/nginx/html
+
+# Expose port 80
 EXPOSE 80
+
+# Start Nginx
 CMD ["nginx", "-g", "daemon off;"]
 
